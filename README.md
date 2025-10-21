@@ -14,7 +14,7 @@ Note: Currently uses the model and default weights from: https://github.com/SWiv
 ### Prerequisites
 
 - Docker with NVIDIA GPU support (recommended) or local Python environment
-- Must provide your own reference files in `data/voices/` directory. See 
+- Must provide your own reference files in `data/voices/` directory. See [Voice Data Structure](#voice-data-structure) section below.
 
 ### Running with Docker
 
