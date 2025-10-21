@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  byov-tts-server:
+    build: .
+    container_name: byov-tts-server
+    ports:
+      - "7861:7861"
+    volumes:
+      - ./data/voices:/app/data/voices:ro
+    environment:
+      - HOST=0.0.0.0
+      - PORT=7861
+      - VOICES_DIR=/app/data/voices
+      - MODEL_NAME=F5-TTS
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
