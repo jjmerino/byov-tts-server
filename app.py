@@ -6,7 +6,7 @@ from typing import Optional
 import numpy as np
 import soundfile as sf
 import torch
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
@@ -106,7 +106,7 @@ async def list_voices():
 
 
 @app.post("/generate")
-async def generate_speech(request: GenerateRequest):
+async def generate_speech(request: GenerateRequest, background_tasks: BackgroundTasks):
     """Generate speech using a pre-configured voice"""
     
     # Resolve variation (defaults to voice_id if not provided)
@@ -172,13 +172,15 @@ async def generate_speech(request: GenerateRequest):
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
             output_path = tmp_file.name
             sf.write(output_path, final_wave, final_sample_rate)
-        
+
+        # Schedule cleanup after response is sent
+        background_tasks.add_task(os.unlink, output_path)
+
         # Return audio file
         return FileResponse(
             output_path,
             media_type="audio/wav",
-            filename=f"{request.voice_id}_{variation}.wav",
-            background=lambda: os.unlink(output_path)  # Clean up after sending
+            filename=f"{request.voice_id}_{variation}.wav"
         )
         
     except Exception as e:
