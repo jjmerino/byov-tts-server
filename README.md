@@ -13,10 +13,11 @@ Note: Currently uses the model and default weights from: https://github.com/SWiv
 
 ### Prerequisites
 
-- Docker with NVIDIA GPU support (recommended) or local Python environment
+- **Docker with NVIDIA GPU** (recommended for homelab/server deployments)
+- **Mac Silicon (M1/M2/M3/M4)** with conda (for local development on Mac)
 - Must provide your own reference files in `data/voices/` directory. See [Voice Data Structure](#voice-data-structure) section below.
 
-### Running with Docker
+### Running with Docker (NVIDIA GPU)
 
 ```bash
 # Build and start the server
@@ -28,7 +29,25 @@ docker-compose logs -f
 
 The API will be available at `http://localhost:7861`
 
-### Running Locally (Development)
+### Running on Mac Silicon (Apple M1/M2/M3/M4)
+
+This server supports Apple Silicon via PyTorch MPS backend (same models as NVIDIA/CUDA).
+
+```bash
+# Create conda environment
+conda env create -f environment-mac.yml
+conda activate byov-tts
+
+# Or install manually with pip
+pip install -r requirements-mac.txt
+
+# Run the server with MPS backend
+TTS_BACKEND=mps python3 app.py
+```
+
+This uses the same F5-TTS models as the NVIDIA backend, ensuring identical output quality.
+
+### Running Locally (NVIDIA/CUDA - Development)
 
 ```bash
 # Install dependencies
@@ -37,7 +56,7 @@ pip install -r requirements.txt
 # Install F5-TTS (if not already installed)
 pip install git+https://github.com/SWivid/F5-TTS.git
 
-# Run the server
+# Run the server (uses PyTorch backend by default)
 python3 app.py
 ```
 
@@ -217,7 +236,7 @@ Environment variables:
 - `HOST`: Server host (default: `0.0.0.0`)
 - `PORT`: Server port (default: `7861`)
 - `VOICES_DIR`: Path to voices directory (default: `data/voices` for local dev, set to `/app/data/voices` in Docker)
-- `MODEL_NAME`: TTS model to use (default: `F5-TTS`)
+- `TTS_BACKEND`: Backend to use - `pytorch` (default, for NVIDIA) or `mps` (for Mac Silicon)
 
 ## Error Responses
 
@@ -264,8 +283,15 @@ if response.status_code == 200:
 ```
 byov-tts-server/
 ├── app.py                  # FastAPI server
+├── backends/               # TTS backend implementations
+│   ├── __init__.py         # Backend selector
+│   ├── base.py             # Abstract base class
+│   ├── pytorch_backend.py  # PyTorch/CUDA backend (NVIDIA)
+│   └── mps_backend.py      # PyTorch MPS backend (Mac Silicon)
 ├── test_api.py             # Test suite and client reference
-├── requirements.txt        # Python dependencies
+├── requirements.txt        # Python dependencies (NVIDIA/PyTorch)
+├── requirements-mac.txt    # Mac Silicon dependencies
+├── environment-mac.yml     # Conda environment for Mac Silicon
 ├── Dockerfile              # Container definition
 ├── docker-compose.yml      # Docker orchestration
 ├── README.md               # This file
